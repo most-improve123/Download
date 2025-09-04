@@ -12,89 +12,120 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+    /* Estilos globales para la página de descarga */
+    body {
+        font-family: 'Inter', sans-serif;
+        background-color: var(--background);
+        color: var(--foreground);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+    }
 
-        .download-container {
-            text-align: center;
-            background: white;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 500px;
-            width: 90%;
-        }
+    /* Contenedor principal */
+    .download-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        max-width: 500px;
+        width: 90%;
+        padding: 2rem;
+        text-align: center;
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        border: 1px solid var(--neutral-200);
+    }
 
-        .logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 1.5rem;
-        }
+    /* Logo */
+    .logo {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+    }
 
-        .logo i {
-            color: #FCD307;
-            font-size: 2rem;
-            margin-right: 0.5rem;
-        }
+    .logo i {
+        color: var(--primary);
+        font-size: 2rem;
+        margin-right: 0.5rem;
+    }
 
-        .logo span {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #333;
-        }
+    .logo span {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--neutral-800);
+    }
 
-        .download-container h2 {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
+    /* Título y descripción */
+    .download-container h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: var(--neutral-800);
+        margin-bottom: 0.5rem;
+    }
 
-        .download-container p {
-            color: #666;
-            margin-bottom: 2rem;
-            font-size: 0.9rem;
-        }
+    .download-container p {
+        color: var(--neutral-600);
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+    }
 
-        .spinner {
-            width: 3rem;
-            height: 3rem;
-            border: 3px solid #e0e0e0;
-            border-top: 3px solid #FCD307;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin: 2rem auto;
-        }
+    /* Spinner de carga */
+    .spinner {
+        width: 3rem;
+        height: 3rem;
+        border: 3px solid var(--neutral-200);
+        border-top: 3px solid var(--primary);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin: 2rem auto;
+    }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+    /* Animación del spinner */
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
 
-        #success-message {
-            display: none;
-            color: #28a745;
-            font-weight: bold;
-            margin-top: 1rem;
-        }
+    /* Contador de redirección */
+    #countdown {
+        font-size: 0.9rem;
+        color: var(--neutral-600);
+        margin-top: 1rem;
+        font-weight: 500;
+    }
 
-        #countdown {
-            font-size: 0.9rem;
-            color: #666;
-            margin-top: 1rem;
-            font-weight: 500;
-        }
-    </style>
+    /* Botón de volver al dashboard (opcional) */
+    .back-button {
+        margin-top: 2rem;
+        padding: 0.75rem 1.5rem;
+        background-color: var(--primary);
+        color: var(--neutral-800);
+        border: none;
+        border-radius: 0.375rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .back-button:hover {
+        background-color: #e0b800; /* Un tono más oscuro de amarillo */
+        transform: translateY(-1px);
+    }
+
+    /* Estilos para el mensaje de éxito */
+    .success-message {
+        color: var(--secondary-green);
+        font-weight: 600;
+        margin-top: 1rem;
+        display: none; /* Se muestra con JavaScript */
+    }
+</style>
 </head>
 <body>
     <div class="download-container">
@@ -289,7 +320,7 @@
                     countdownElement.textContent = `Redirecting in ${seconds} seconds...`;
                     if (seconds <= 0) {
                         clearInterval(countdown);
-                        window.location.href = 'https://tudominio.com/dashboard'; // Cambia por tu URL de Wix
+                        window.location.href = 'https://levi5171.wixstudio.com/certificates'; // Cambia por tu URL de Wix
                     }
                 }, 1000);
             } catch (error) {
