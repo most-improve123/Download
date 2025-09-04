@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Certificate - WeSpark</title>
-    <link rel="stylesheet" href="prueba.css">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -12,134 +11,104 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-   <style>
-    /* Estilos globales para la página de descarga */
-    body {
-        font-family: 'Inter', sans-serif;
-        background-color: var(--background);
-        color: var(--foreground);
-        margin: 0;
-        padding: 0;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-    }
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
 
-    /* Contenedor principal */
-    .download-container {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        max-width: 500px;
-        width: 90%;
-        padding: 2rem;
-        text-align: center;
-        background: white;
-        border-radius: 0.5rem;
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-        border: 1px solid var(--neutral-200);
-    }
+        .download-container {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 500px;
+            width: 90%;
+        }
 
-    /* Logo */
-    .logo {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1.5rem;
-    }
+        .logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
 
-    .logo i {
-        color: var(--primary);
-        font-size: 2rem;
-        margin-right: 0.5rem;
-    }
+        .logo i {
+            color: #FCD307;
+            font-size: 2rem;
+            margin-right: 0.5rem;
+        }
 
-    .logo span {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--neutral-800);
-    }
+        .logo span {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
 
-    /* Título y descripción */
-    .download-container h2 {
-        font-size: 1.5rem;
-        font-weight: 600;
-        color: var(--neutral-800);
-        margin-bottom: 0.5rem;
-    }
+        .download-container h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
 
-    .download-container p {
-        color: var(--neutral-600);
-        margin-bottom: 2rem;
-        font-size: 0.9rem;
-    }
+        .download-container p {
+            color: #666;
+            margin-bottom: 2rem;
+            font-size: 0.9rem;
+        }
 
-    /* Spinner de carga */
-    .spinner {
-        width: 3rem;
-        height: 3rem;
-        border: 3px solid var(--neutral-200);
-        border-top: 3px solid var(--primary);
-        border-radius: 50%;
-        animation: spin 1s linear infinite;
-        margin: 2rem auto;
-    }
+        .spinner {
+            width: 3rem;
+            height: 3rem;
+            border: 3px solid #e0e0e0;
+            border-top: 3px solid #FCD307;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 2rem auto;
+        }
 
-    /* Animación del spinner */
-    @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-    }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
 
-    /* Contador de redirección */
-    #countdown {
-        font-size: 0.9rem;
-        color: var(--neutral-600);
-        margin-top: 1rem;
-        font-weight: 500;
-    }
+        #success-message {
+            display: none;
+            color: #28a745;
+            font-weight: bold;
+            margin-top: 1rem;
+        }
 
-    /* Botón de volver al dashboard (opcional) */
-    .back-button {
-        margin-top: 2rem;
-        padding: 0.75rem 1.5rem;
-        background-color: var(--primary);
-        color: var(--neutral-800);
-        border: none;
-        border-radius: 0.375rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .back-button:hover {
-        background-color: #e0b800; /* Un tono más oscuro de amarillo */
-        transform: translateY(-1px);
-    }
-
-    /* Estilos para el mensaje de éxito */
-    .success-message {
-        color: var(--secondary-green);
-        font-weight: 600;
-        margin-top: 1rem;
-        display: none; /* Se muestra con JavaScript */
-    }
-</style>
-
+        #countdown {
+            font-size: 0.9rem;
+            color: #666;
+            margin-top: 1rem;
+            font-weight: 500;
+        }
+    </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="download-container">
-            <div class="logo">
-                <i class="fas fa-graduation-cap"></i>
-                <span>WeSpark</span>
-            </div>
-            <h2>Preparing Your Certificate</h2>
-            <p>Your certificate will download automatically in a moment.</p>
-            <div class="spinner"></div>
+    <div class="download-container">
+        <div class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            <span>WeSpark</span>
         </div>
+        <h2>Preparing Your Certificate</h2>
+        <p>Your certificate will download automatically in a moment.</p>
+        <div class="spinner"></div>
+        <p id="success-message">
+            <i class="fas fa-check-circle"></i> Certificate downloaded successfully!
+        </p>
+        <p id="countdown">Redirecting in 10 seconds...</p>
     </div>
 
     <script>
@@ -171,30 +140,23 @@
             const data = encoder.encode(input);
             const hashBuffer = await crypto.subtle.digest('SHA-256', data);
             const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            return hashHex;
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
         }
 
         // Función para guardar el certificado en Firestore
         async function saveCertificateToFirestore(id, nombre, curso, fecha, hashHex) {
             try {
-                const fechaActual = new Date().toISOString().split('T')[0];
                 await dbCertificates.collection('certificates').add({
                     id: id,
                     nombre: nombre,
                     curso: curso,
-                    fecha: fechaActual,
+                    fecha: fecha,
                     hash: hashHex,
                     createdAt: firebase.firestore.FieldValue.serverTimestamp()
                 });
-                console.log("Certificado guardado con éxito en Firestore");
+                console.log("Certificado guardado en Firestore");
             } catch (error) {
-                console.error("Error al guardar el certificado en Firestore:", error);
-                if (error.code === "permission-denied") {
-                    alert("No tienes permisos para guardar el certificado. Por favor, contacta al administrador.");
-                } else {
-                    alert("Error al guardar el certificado. Por favor, inténtalo de nuevo más tarde.");
-                }
+                console.error("Error al guardar en Firestore:", error);
             }
         }
 
@@ -203,12 +165,10 @@
             return 'https://static.wixstatic.com/media/a687f1_d41ce5e63188472fbf07f5d14db3c63e~mv2.png';
         }
 
-        // Función para generar el PDF (exactamente igual que en prueba.js)
+        // Función para generar el PDF (exactamente igual que en tu proyecto)
         async function generarPDFIndividual(nombre, curso, fecha, id, hashHex) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
-            const robotoRegularUrl = 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf';
-            const robotoBoldUrl = 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf';
 
             const loadAndRegisterFont = async (url, fontName, fontStyle) => {
                 const response = await fetch(url);
@@ -234,22 +194,35 @@
             };
 
             try {
-                await loadAndRegisterFont(robotoRegularUrl, 'Roboto', 'normal');
-                await loadAndRegisterFont(robotoBoldUrl, 'Roboto', 'bold');
+                // Cargar fuentes Roboto
+                await loadAndRegisterFont(
+                    'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf',
+                    'Roboto',
+                    'normal'
+                );
+                await loadAndRegisterFont(
+                    'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf',
+                    'Roboto',
+                    'bold'
+                );
+
+                // Cargar imágenes
                 const fondoURL = 'https://static.wixstatic.com/media/a687f1_6daa751a4aac4a418038ae37f20db004~mv2.jpg';
-                const fondo = await loadImage(fondoURL);
                 const qrUrl = generateQRCodeLink(id);
+                const fondo = await loadImage(fondoURL);
                 const qrImage = await loadImage(qrUrl);
 
+                // Generar el PDF
                 doc.addImage(fondo, 'JPEG', 0, 0, 850, 595);
                 doc.setFont('Roboto', 'bold');
                 doc.setFontSize(37);
                 doc.setTextColor(0, 0, 0);
-                doc.text(`${curso}`, 425, 130, { align: 'center' });
-                doc.setFont('Roboto', 'bold');
+                doc.text(curso, 425, 130, { align: 'center' });
+
                 doc.setFontSize(35);
                 doc.setTextColor(255, 255, 255);
-                doc.text(`${nombre}`, 425, 190, { align: 'center' });
+                doc.text(nombre, 425, 190, { align: 'center' });
+
                 doc.setFont('Roboto', 'normal');
                 doc.setFontSize(14);
                 doc.setTextColor(0, 0, 0);
@@ -259,6 +232,7 @@
                 doc.text(doc.splitTextToSize(text1, 700), 80, 270);
                 doc.text("training. Now go out there and release your inner genius!", 260, 290);
 
+                // Fecha
                 const fechaActual = new Date(fecha);
                 const dia = String(fechaActual.getDate()).padStart(2, '0');
                 const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
@@ -269,17 +243,18 @@
                 doc.setFontSize(13);
                 doc.setTextColor(255, 255, 255);
                 doc.text(`San Salvador, ${fechaFormateada}`, 340, 320);
+
                 doc.setFont('Roboto', 'normal');
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`ID: ${id}`, 4, 15);
                 doc.text(`Hash: ${hashHex}`, 263, 585);
+
                 doc.addImage(qrImage, 'PNG', 124, 460, 100, 100);
 
                 return doc.output('blob');
             } catch (error) {
                 console.error("Error al generar PDF:", error);
-                alert(`Error al generar el PDF para ${nombre}`);
                 throw error;
             }
         }
@@ -302,18 +277,28 @@
                 a.click();
                 document.body.removeChild(a);
 
-                // Redirigir al dashboard después de 3 segundos
-                setTimeout(() => {
-                    window.location.href = 'prueba.html';
-                }, 10000);
+                // Mostrar mensaje de éxito
+                document.getElementById('success-message').style.display = 'block';
+                document.querySelector('.spinner').style.display = 'none';
+
+                // Contador de redirección
+                let seconds = 10;
+                const countdownElement = document.getElementById('countdown');
+                const countdown = setInterval(() => {
+                    seconds--;
+                    countdownElement.textContent = `Redirecting in ${seconds} seconds...`;
+                    if (seconds <= 0) {
+                        clearInterval(countdown);
+                        window.location.href = 'https://tudominio.com/dashboard'; // Cambia por tu URL de Wix
+                    }
+                }, 1000);
             } catch (error) {
-                console.error('Error:', error);
-                alert('Failed to generate the certificate. Please try again.');
-                window.location.href = 'prueba.html';
+                console.error("Error:", error);
+                alert("Failed to generate the certificate. Please try again.");
             }
         }
 
-        // Ejecutar la descarga al cargar la página
+        // Ejecutar al cargar la página
         window.onload = downloadPDF;
     </script>
 </body>
