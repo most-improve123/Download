@@ -6,6 +6,7 @@
     <title>Descargar Certificado - WeSpark</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -98,11 +99,9 @@
         </div>
         <h1>Tu certificado está listo</h1>
         <p>Revisa los detalles y descárgalo cuando estés listo.</p>
-
         <div class="certificate-preview" id="certificate-preview">
             <!-- Los detalles del certificado se cargarán aquí -->
         </div>
-
         <div class="buttons">
             <button id="download-btn" class="btn btn-primary">
                 <i class="fas fa-download"></i> Descargar PDF
@@ -112,16 +111,14 @@
             </button>
         </div>
     </div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script>
-        // Obtener parámetros de la URL
+        // Función para obtener parámetros de la URL
         function getQueryParams() {
             const params = new URLSearchParams(window.location.search);
             return {
                 id: params.get('id'),
-                nombre: params.get('nombre'),
-                curso: params.get('curso'),
+                nombre: decodeURIComponent(params.get('nombre') || ''),
+                curso: decodeURIComponent(params.get('curso') || ''),
                 fecha: params.get('fecha'),
                 hashHex: params.get('hashHex')
             };
@@ -131,38 +128,152 @@
         function showCertificatePreview() {
             const { id, nombre, curso, fecha, hashHex } = getQueryParams();
             const preview = document.getElementById('certificate-preview');
-
             preview.innerHTML = `
                 <p><strong>ID del Certificado:</strong> ${id}</p>
                 <p><strong>Nombre:</strong> ${nombre}</p>
                 <p><strong>Curso:</strong> ${curso}</p>
                 <p><strong>Fecha:</strong> ${fecha}</p>
-                <p><strong>Hash:</strong> ${hashHex.substring(0, 20)}...</p>
+                <p><strong>Hash:</strong> ${hashHex ? hashHex.substring(0, 20) + '...' : ''}</p>
             `;
         }
 
-        // Generar y descargar el PDF
-        async function generarYDescargarPDF() {
-            const { id, nombre, curso, fecha, hashHex } = getQueryParams();
+        // Función para generar el enlace del código QR
+        function generateQRCodeLink(id) {
+            return `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(id)}`;
+        }
+
+        // Función para cargar y registrar fuentes
+        async function loadAndRegisterFont(doc, url, fontName, fontStyle) {
+            try {
+                const response = await fetch(url);
+                const fontData = await response.arrayBuffer();
+                const base64Font = btoa(
+                    new Uint8Array(fontData).reduce(
+                        (data, byte) => data + String.fromCharCode(byte),
+                        ''
+                    )
+                );
+                doc.addFileToVFS(`${fontName}.ttf`, base64Font);
+                doc.addFont(`${fontName}.ttf`, fontName, fontStyle);
+            } catch (error) {
+                console.error(`Error al cargar la fuente ${fontName}:`, error);
+                // Si falla, usa una fuente predeterminada
+                doc.setFont('helvetica', fontStyle);
+            }
+        }
+
+        // Función para cargar imágenes con manejo de errores
+        const loadImage = (src) => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "Anonymous";
+                img.onload = () => resolve(img);
+                img.onerror = () => {
+                    console.error(`Error al cargar la imagen: ${src}`);
+                    // Imagen de respaldo (fondo gris con texto)
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 100;
+                    canvas.height = 100;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = 'lightgray';
+                    ctx.fillRect(0, 0, 100, 100);
+                    ctx.fillStyle = 'black';
+                    ctx.fillText('Error loading image', 10, 50);
+                    const imgFallback = new Image();
+                    imgFallback.src = canvas.toDataURL();
+                    imgFallback.onload = () => resolve(imgFallback);
+                };
+                img.src = src;
+            });
+        };
+
+        // Función para generar PDF individual (idéntica a la original)
+        async function generarPDFIndividual(nombre, curso, fecha, id, hashHex) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
 
-            // Personalizar el PDF (ejemplo simplificado)
-            doc.setFontSize(20);
-            doc.text(`Certificado para: ${nombre}`, 50, 50);
-            doc.text(`Curso: ${curso}`, 50, 80);
-            doc.text(`ID: ${id}`, 50, 110);
-            doc.text(`Fecha: ${fecha}`, 50, 140);
-            doc.text(`Hash: ${hashHex}`, 50, 170);
+            try {
+                // Cargar fuentes Roboto (con manejo de errores)
+                await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', 'Roboto', 'normal');
+                await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', 'Roboto', 'bold');
 
-            // Descargar el PDF
-            doc.save(`certificado_${id}.pdf`);
+                // Cargar imágenes (fondo y código QR)
+                const fondoURL = 'https://static.wixstatic.com/media/a687f1_6daa751a4aac4a418038ae37f20db004~mv2.jpg';
+                const qrUrl = generateQRCodeLink(id);
+
+                const [fondo, qrImage] = await Promise.all([
+                    loadImage(fondoURL),
+                    loadImage(qrUrl)
+                ]);
+
+                // Agregar fondo al PDF
+                doc.addImage(fondo, 'JPEG', 0, 0, 850, 595);
+
+                // Agregar texto con fuentes y estilos
+                doc.setFont('Roboto', 'bold');
+                doc.setFontSize(37);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`${curso}`, 425, 130, { align: 'center' });
+
+                doc.setFont('Roboto', 'bold');
+                doc.setFontSize(35);
+                doc.setTextColor(255, 255, 255);
+                doc.text(`${nombre}`, 425, 190, { align: 'center' });
+
+                doc.setFont('Roboto', 'normal');
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                const text = "WeSpark certifies that you have completed our future-ready learning experience designed to build practical";
+                doc.text(doc.splitTextToSize(text, 700), 80, 250);
+                const text1 = "skills for real-world impact. This certificate celebrates your participation in our interactive, innovation-focused";
+                doc.text(doc.splitTextToSize(text1, 700), 80, 270);
+                doc.text("training. Now go out there and release your inner genius!", 260, 290);
+
+                // Agregar fecha
+                const fechaActual = new Date();
+                const dia = String(fechaActual.getDate()).padStart(2, '0');
+                const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
+                const anio = fechaActual.getFullYear();
+                const fechaFormateada = `${dia}.${mes}.${anio}`;
+
+                doc.setFont('Roboto', 'bold');
+                doc.setFontSize(13);
+                doc.setTextColor(255, 255, 255);
+                doc.text(`San Salvador, ${fechaFormateada}`, 340, 320);
+
+                // Agregar ID y Hash
+                doc.setFont('Roboto', 'normal');
+                doc.setFontSize(10);
+                doc.setTextColor(0, 0, 0);
+                doc.text(`ID: ${id}`, 4, 15);
+                doc.text(`Hash: ${hashHex}`, 263, 585);
+
+                // Agregar código QR
+                doc.addImage(qrImage, 'PNG', 124, 460, 100, 100);
+
+                return doc;
+            } catch (error) {
+                console.error("Error al generar PDF:", error);
+                alert(`Error al generar el PDF para ${nombre}.`);
+                throw error;
+            }
         }
 
-        // Eventos de los botones
-        document.getElementById('download-btn').addEventListener('click', generarYDescargarPDF);
+        // Evento para el botón de descarga
+        document.getElementById('download-btn').addEventListener('click', async () => {
+            const { id, nombre, curso, fecha, hashHex } = getQueryParams();
+            try {
+                const doc = await generarPDFIndividual(nombre, curso, fecha, id, hashHex);
+                doc.save(`certificado_${id}.pdf`);
+            } catch (error) {
+                console.error("Error al descargar el PDF:", error);
+                alert("Error al descargar el PDF. Inténtalo de nuevo.");
+            }
+        });
+
+        // Evento para el botón de regreso
         document.getElementById('return-btn').addEventListener('click', () => {
-            window.history.back(); // Regresar a la página anterior
+            window.close();
         });
 
         // Mostrar detalles al cargar la página
