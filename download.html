@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Descargar Certificado - WeSpark</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .download-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        .logo {
+            margin-bottom: 20px;
+        }
+        .logo i {
+            color: #FCD307;
+            font-size: 2rem;
+            margin-right: 10px;
+        }
+        .logo span {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #333;
+        }
+        h1 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        .certificate-preview {
+            background: #f0f0f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        .certificate-preview p {
+            margin: 10px 0;
+            font-size: 0.9rem;
+        }
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary {
+            background: #FCD307;
+            color: #000;
+            border: none;
+        }
+        .btn-outline {
+            background: transparent;
+            color: #666;
+            border: 1px solid #ddd;
+        }
+        .btn:hover {
+            opacity: 0.9;
+        }
+    </style>
+</head>
+<body>
+    <div class="download-container">
+        <div class="logo">
+            <i class="fas fa-graduation-cap"></i>
+            <span>WeSpark</span>
+        </div>
+        <h1>Tu certificado está listo</h1>
+        <p>Revisa los detalles y descárgalo cuando estés listo.</p>
+
+        <div class="certificate-preview" id="certificate-preview">
+            <!-- Los detalles del certificado se cargarán aquí -->
+        </div>
+
+        <div class="buttons">
+            <button id="download-btn" class="btn btn-primary">
+                <i class="fas fa-download"></i> Descargar PDF
+            </button>
+            <button id="return-btn" class="btn btn-outline">
+                <i class="fas fa-arrow-left"></i> Regresar
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        // Obtener parámetros de la URL
+        function getQueryParams() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                id: params.get('id'),
+                nombre: params.get('nombre'),
+                curso: params.get('curso'),
+                fecha: params.get('fecha'),
+                hashHex: params.get('hashHex')
+            };
+        }
+
+        // Mostrar detalles del certificado en la vista previa
+        function showCertificatePreview() {
+            const { id, nombre, curso, fecha, hashHex } = getQueryParams();
+            const preview = document.getElementById('certificate-preview');
+
+            preview.innerHTML = `
+                <p><strong>ID del Certificado:</strong> ${id}</p>
+                <p><strong>Nombre:</strong> ${nombre}</p>
+                <p><strong>Curso:</strong> ${curso}</p>
+                <p><strong>Fecha:</strong> ${fecha}</p>
+                <p><strong>Hash:</strong> ${hashHex.substring(0, 20)}...</p>
+            `;
+        }
+
+        // Generar y descargar el PDF
+        async function generarYDescargarPDF() {
+            const { id, nombre, curso, fecha, hashHex } = getQueryParams();
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
+
+            // Personalizar el PDF (ejemplo simplificado)
+            doc.setFontSize(20);
+            doc.text(`Certificado para: ${nombre}`, 50, 50);
+            doc.text(`Curso: ${curso}`, 50, 80);
+            doc.text(`ID: ${id}`, 50, 110);
+            doc.text(`Fecha: ${fecha}`, 50, 140);
+            doc.text(`Hash: ${hashHex}`, 50, 170);
+
+            // Descargar el PDF
+            doc.save(`certificado_${id}.pdf`);
+        }
+
+        // Eventos de los botones
+        document.getElementById('download-btn').addEventListener('click', generarYDescargarPDF);
+        document.getElementById('return-btn').addEventListener('click', () => {
+            window.history.back(); // Regresar a la página anterior
+        });
+
+        // Mostrar detalles al cargar la página
+        window.onload = showCertificatePreview;
+    </script>
+</body>
+</html>
