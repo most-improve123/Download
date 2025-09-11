@@ -260,16 +260,25 @@
         }
 
         // Evento para el botón de descarga
-        document.getElementById('download-btn').addEventListener('click', async () => {
-            const { id, nombre, curso, fecha, hashHex } = getQueryParams();
-            try {
-                const doc = await generarPDFIndividual(nombre, curso, fecha, id, hashHex);
-                doc.save(`certificado_${id}.pdf`);
-            } catch (error) {
-                console.error("Error al descargar el PDF:", error);
-                alert("Error al descargar el PDF. Inténtalo de nuevo.");
-            }
-        });
+        // Evento para el botón de descarga
+document.getElementById('download-btn').addEventListener('click', async () => {
+    const { id, nombre, curso, fecha, hashHex } = getQueryParams();
+    try {
+        const doc = await generarPDFIndividual(nombre, curso, fecha, id, hashHex);
+        const blob = doc.output('blob');
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `certificado_${id}.pdf`;
+        document.body.appendChild(a);
+        a.click(); // Este clic es iniciado por el usuario al hacer clic en el botón
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    } catch (error) {
+        console.error("Error al descargar el PDF:", error);
+        alert("Error al descargar el PDF. Inténtalo de nuevo.");
+    }
+});
 
         // Evento para el botón de regreso
         document.getElementById('return-btn').addEventListener('click', () => {
@@ -281,16 +290,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
