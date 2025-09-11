@@ -123,7 +123,6 @@
                 hashHex: params.get('hashHex')
             };
         }
-
         // Mostrar detalles del certificado en la vista previa
         function showCertificatePreview() {
             const { id, nombre, curso, fecha, hashHex } = getQueryParams();
@@ -136,12 +135,10 @@
                 <p><strong>Hash:</strong> ${hashHex ? hashHex.substring(0, 20) + '...' : ''}</p>
             `;
         }
-
         // Función para generar el enlace del código QR
         function generateQRCodeLink(id) {
             return `https://static.wixstatic.com/media/a687f1_d41ce5e63188472fbf07f5d14db3c63e~mv2.png`;
         }
-
         // Función para cargar y registrar fuentes
         async function loadAndRegisterFont(doc, url, fontName, fontStyle) {
             try {
@@ -157,20 +154,17 @@
                 doc.addFont(`${fontName}.ttf`, fontName, fontStyle);
             } catch (error) {
                 console.error(`Error al cargar la fuente ${fontName}:`, error);
-                // Si falla, usa una fuente predeterminada
                 doc.setFont('helvetica', fontStyle);
             }
         }
-
         // Función para cargar imágenes con manejo de errores
         const loadImage = (src) => {
-            return new Promise((resolve, reject) => {
+            return new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = "Anonymous";
                 img.onload = () => resolve(img);
                 img.onerror = () => {
                     console.error(`Error al cargar la imagen: ${src}`);
-                    // Imagen de respaldo (fondo gris con texto)
                     const canvas = document.createElement('canvas');
                     canvas.width = 100;
                     canvas.height = 100;
@@ -186,40 +180,32 @@
                 img.src = src;
             });
         };
-
-        // Función para generar PDF individual (idéntica a la original)
+        // Función para generar PDF individual
         async function generarPDFIndividual(nombre, curso, fecha, id, hashHex) {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
-
             try {
-                // Cargar fuentes Roboto (con manejo de errores)
+                // Cargar fuentes Roboto
                 await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', 'Roboto', 'normal');
                 await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', 'Roboto', 'bold');
-
                 // Cargar imágenes (fondo y código QR)
                 const fondoURL = 'https://static.wixstatic.com/media/a687f1_6daa751a4aac4a418038ae37f20db004~mv2.jpg';
                 const qrUrl = generateQRCodeLink(id);
-
                 const [fondo, qrImage] = await Promise.all([
                     loadImage(fondoURL),
                     loadImage(qrUrl)
                 ]);
-
                 // Agregar fondo al PDF
                 doc.addImage(fondo, 'JPEG', 0, 0, 850, 595);
-
                 // Agregar texto con fuentes y estilos
                 doc.setFont('Roboto', 'bold');
                 doc.setFontSize(37);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`${curso}`, 425, 130, { align: 'center' });
-
                 doc.setFont('Roboto', 'bold');
                 doc.setFontSize(35);
                 doc.setTextColor(255, 255, 255);
                 doc.text(`${nombre}`, 425, 190, { align: 'center' });
-
                 doc.setFont('Roboto', 'normal');
                 doc.setFontSize(14);
                 doc.setTextColor(0, 0, 0);
@@ -228,29 +214,24 @@
                 const text1 = "skills for real-world impact. This certificate celebrates your participation in our interactive, innovation-focused";
                 doc.text(doc.splitTextToSize(text1, 700), 80, 270);
                 doc.text("training. Now go out there and release your inner genius!", 260, 290);
-
                 // Agregar fecha
                 const fechaActual = new Date();
                 const dia = String(fechaActual.getDate()).padStart(2, '0');
                 const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
                 const anio = fechaActual.getFullYear();
                 const fechaFormateada = `${dia}.${mes}.${anio}`;
-
                 doc.setFont('Roboto', 'bold');
                 doc.setFontSize(13);
                 doc.setTextColor(255, 255, 255);
                 doc.text(`San Salvador, ${fechaFormateada}`, 340, 320);
-
                 // Agregar ID y Hash
                 doc.setFont('Roboto', 'normal');
                 doc.setFontSize(10);
                 doc.setTextColor(0, 0, 0);
                 doc.text(`ID: ${id}`, 4, 15);
                 doc.text(`Hash: ${hashHex}`, 263, 585);
-
                 // Agregar código QR
                 doc.addImage(qrImage, 'PNG', 124, 460, 100, 100);
-
                 return doc;
             } catch (error) {
                 console.error("Error al generar PDF:", error);
@@ -258,33 +239,29 @@
                 throw error;
             }
         }
-
         // Evento para el botón de descarga
-        // Evento para el botón de descarga
-document.getElementById('download-btn').addEventListener('click', async () => {
-    const { id, nombre, curso, fecha, hashHex } = getQueryParams();
-    try {
-        const doc = await generarPDFIndividual(nombre, curso, fecha, id, hashHex);
-        const blob = doc.output('blob');
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `certificado_${id}.pdf`;
-        document.body.appendChild(a);
-        a.click(); // Este clic es iniciado por el usuario al hacer clic en el botón
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    } catch (error) {
-        console.error("Error al descargar el PDF:", error);
-        alert("Error al descargar el PDF. Inténtalo de nuevo.");
-    }
-});
-
+        document.getElementById('download-btn').addEventListener('click', async () => {
+            const { id, nombre, curso, fecha, hashHex } = getQueryParams();
+            try {
+                const doc = await generarPDFIndividual(nombre, curso, fecha, id, hashHex);
+                const blob = doc.output('blob');
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `certificado_${id}.pdf`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (error) {
+                console.error("Error al descargar el PDF:", error);
+                alert("Error al descargar el PDF. Inténtalo de nuevo.");
+            }
+        });
         // Evento para el botón de regreso
         document.getElementById('return-btn').addEventListener('click', () => {
             window.close();
         });
-
         // Mostrar detalles al cargar la página
         window.onload = showCertificatePreview;
     </script>
