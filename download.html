@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -188,77 +189,88 @@
         };
 
         // Función para generar PDF individual (idéntica a la original)
-        async function generarPDFIndividual(nombre, curso, fecha, id, hashHex) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
+        // Función para generar PDF individual (MODIFICADA para generar QR dinámico)
+async function generarPDFIndividual(nombre, curso, fecha, id, hashHex) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
 
-            try {
-                // Cargar fuentes Roboto (con manejo de errores)
-                await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', 'Roboto', 'normal');
-                await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', 'Roboto', 'bold');
+    // Función para generar el código QR dinámico como Data URL
+    const generateQRCodeDataURL = (text) => {
+        return new Promise((resolve, reject) => {
+            QRCode.toDataURL(text, { errorCorrectionLevel: 'H', width: 200 }, (err, url) => {
+                if (err) {
+                    console.error('Error al generar el código QR:', err);
+                    reject(err);
+                } else {
+                    resolve(url);
+                }
+            });
+        });
+    };
 
-                // Cargar imágenes (fondo y código QR)
-                const fondoURL = 'https://static.wixstatic.com/media/a687f1_6daa751a4aac4a418038ae37f20db004~mv2.jpg';
-                const qrUrl = generateQRCodeLink(id);
+    try {
+        // Cargar fuentes Roboto (con manejo de errores)
+        await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', 'Roboto', 'normal');
+        await loadAndRegisterFont(doc, 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', 'Roboto', 'bold');
 
-                const [fondo, qrImage] = await Promise.all([
-                    loadImage(fondoURL),
-                    loadImage(qrUrl)
-                ]);
+        // Cargar imágenes (solo el fondo, el QR se generará dinámicamente)
+        const fondoURL = 'https://static.wixstatic.com/media/a687f1_6daa751a4aac4a418038ae37f20db004~mv2.jpg';
+        const fondo = await loadImage(fondoURL);
 
-                // Agregar fondo al PDF
-                doc.addImage(fondo, 'JPEG', 0, 0, 850, 595);
+        // Generar la URL de verificación con el ID del certificado
+        const verificationUrl = `${window.location.origin}/prueba.html?view=verifier&certificateId=${id}`;
+        // Generar el código QR como Data URL
+        const qrCodeDataURL = await generateQRCodeDataURL(verificationUrl);
 
-                // Agregar texto con fuentes y estilos
-                doc.setFont('Roboto', 'bold');
-                doc.setFontSize(37);
-                doc.setTextColor(0, 0, 0);
-                doc.text(`${curso}`, 425, 130, { align: 'center' });
+        // Agregar fondo al PDF
+        doc.addImage(fondo, 'JPEG', 0, 0, 850, 595);
 
-                doc.setFont('Roboto', 'bold');
-                doc.setFontSize(35);
-                doc.setTextColor(255, 255, 255);
-                doc.text(`${nombre}`, 425, 190, { align: 'center' });
+        // Agregar texto con fuentes y estilos
+        doc.setFont('Roboto', 'bold');
+        doc.setFontSize(37);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`${curso}`, 425, 130, { align: 'center' });
+        doc.setFont('Roboto', 'bold');
+        doc.setFontSize(35);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`${nombre}`, 425, 190, { align: 'center' });
+        doc.setFont('Roboto', 'normal');
+        doc.setFontSize(14);
+        doc.setTextColor(0, 0, 0);
+        const text = "WeSpark certifies that you have completed our future-ready learning experience designed to build practical";
+        doc.text(doc.splitTextToSize(text, 700), 80, 250);
+        const text1 = "skills for real-world impact. This certificate celebrates your participation in our interactive, innovation-focused";
+        doc.text(doc.splitTextToSize(text1, 700), 80, 270);
+        doc.text("training. Now go out there and release your inner genius!", 260, 290);
 
-                doc.setFont('Roboto', 'normal');
-                doc.setFontSize(14);
-                doc.setTextColor(0, 0, 0);
-                const text = "WeSpark certifies that you have completed our future-ready learning experience designed to build practical";
-                doc.text(doc.splitTextToSize(text, 700), 80, 250);
-                const text1 = "skills for real-world impact. This certificate celebrates your participation in our interactive, innovation-focused";
-                doc.text(doc.splitTextToSize(text1, 700), 80, 270);
-                doc.text("training. Now go out there and release your inner genius!", 260, 290);
+        // Agregar fecha
+        const fechaActual = new Date();
+        const dia = String(fechaActual.getDate()).padStart(2, '0');
+        const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
+        const anio = fechaActual.getFullYear();
+        const fechaFormateada = `${dia}.${mes}.${anio}`;
+        doc.setFont('Roboto', 'bold');
+        doc.setFontSize(13);
+        doc.setTextColor(255, 255, 255);
+        doc.text(`San Salvador, ${fechaFormateada}`, 340, 320);
 
-                // Agregar fecha
-                const fechaActual = new Date();
-                const dia = String(fechaActual.getDate()).padStart(2, '0');
-                const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
-                const anio = fechaActual.getFullYear();
-                const fechaFormateada = `${dia}.${mes}.${anio}`;
+        // Agregar ID y Hash
+        doc.setFont('Roboto', 'normal');
+        doc.setFontSize(10);
+        doc.setTextColor(0, 0, 0);
+        doc.text(`ID: ${id}`, 4, 15);
+        doc.text(`Hash: ${hashHex}`, 263, 585);
 
-                doc.setFont('Roboto', 'bold');
-                doc.setFontSize(13);
-                doc.setTextColor(255, 255, 255);
-                doc.text(`San Salvador, ${fechaFormateada}`, 340, 320);
+        // Agregar código QR DINÁMICO
+        doc.addImage(qrCodeDataURL, 'PNG', 124, 460, 100, 100);
 
-                // Agregar ID y Hash
-                doc.setFont('Roboto', 'normal');
-                doc.setFontSize(10);
-                doc.setTextColor(0, 0, 0);
-                doc.text(`ID: ${id}`, 4, 15);
-                doc.text(`Hash: ${hashHex}`, 263, 585);
-
-                // Agregar código QR
-                doc.addImage(qrImage, 'PNG', 124, 460, 100, 100);
-
-                return doc;
-            } catch (error) {
-                console.error("Error al generar PDF:", error);
-                alert(`Error al generar el PDF para ${nombre}.`);
-                throw error;
-            }
-        }
-
+        return doc;
+    } catch (error) {
+        console.error("Error al generar PDF:", error);
+        alert(`Error al generar el PDF para ${nombre}.`);
+        throw error;
+    }
+}
         // Evento para el botón de descarga
         document.getElementById('download-btn').addEventListener('click', async () => {
             const { id, nombre, curso, fecha, hashHex } = getQueryParams();
