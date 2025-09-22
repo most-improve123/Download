@@ -190,19 +190,49 @@
         };
 
         // Función para generar PDF individual (idéntica a la original)
-        async function generarPDFIndividual(nombre, curso, fecha, id, hashHex) {
+       async function generarPDFIndividual(nombre, curso, fecha, id, hashHex) {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'A4' });
 
-    // Función para generar el código QR dinámico
-    const generateQRCodeDataURL = (url) => {
-        return new Promise((resolve) => {
-            QRCode.toDataURL(url, { errorCorrectionLevel: 'H' }, (err, qrDataURL) => {
+    // Función para generar el código QR dinámico con logo
+    const generateQRCodeWithLogo = (url, logoUrl) => {
+        return new Promise(async (resolve) => {
+            // Generar el código QR
+            QRCode.toDataURL(url, { errorCorrectionLevel: 'H' }, async (err, qrDataURL) => {
                 if (err) {
                     console.error('Error al generar el código QR:', err);
                     resolve(null);
                 } else {
-                    resolve(qrDataURL);
+                    // Crear un canvas para el código QR
+                    const qrCanvas = document.createElement('canvas');
+                    const qrCtx = qrCanvas.getContext('2d');
+                    const qrImage = new Image();
+                    qrImage.src = qrDataURL;
+
+                    await new Promise((resolveImg) => {
+                        qrImage.onload = resolveImg;
+                    });
+
+                    qrCanvas.width = qrImage.width;
+                    qrCanvas.height = qrImage.height;
+                    qrCtx.drawImage(qrImage, 0, 0);
+
+                    // Cargar el logo
+                    const logoImage = new Image();
+                    logoImage.src = logoUrl;
+
+                    await new Promise((resolveLogo) => {
+                        logoImage.onload = resolveLogo;
+                    });
+
+                    // Dibujar el logo en el centro del código QR
+                    const logoSize = qrCanvas.width * 0.2; // Tamaño del logo (20% del tamaño del QR)
+                    const logoX = (qrCanvas.width - logoSize) / 2;
+                    const logoY = (qrCanvas.height - logoSize) / 2;
+                    qrCtx.drawImage(logoImage, logoX, logoY, logoSize, logoSize);
+
+                    // Convertir el canvas a una imagen
+                    resolve(qrCanvas.toDataURL('image/png'));
                 }
             });
         });
@@ -211,8 +241,11 @@
     // Generar la URL con el ID del certificado
     const qrUrl = `https://l3v145431.github.io/Verificate.github.io/index.html?view=verifier&certificateId=${id}`;
 
-    // Generar el código QR dinámico
-    const qrCodeDataURL = await generateQRCodeDataURL(qrUrl);
+    // URL del logo de tu compañía
+    const logoUrl = 'https://static.wixstatic.com/media/a687f1_d41ce5e63188472fbf07f5d14db3c63e~mv2.png';
+
+    // Generar el código QR dinámico con el logo
+    const qrCodeDataURL = await generateQRCodeWithLogo(qrUrl, logoUrl);
 
     // Función para cargar y registrar fuentes
     async function loadAndRegisterFont(doc, url, fontName, fontStyle) {
@@ -295,7 +328,6 @@
         const mes = String(fechaActual.getMonth() + 1).padStart(2, '0');
         const anio = fechaActual.getFullYear();
         const fechaFormateada = `${dia}.${mes}.${anio}`;
-
         doc.setFont('Roboto', 'bold');
         doc.setFontSize(13);
         doc.setTextColor(255, 255, 255);
@@ -308,9 +340,12 @@
         doc.text(`ID: ${id}`, 4, 15);
         doc.text(`Hash: ${hashHex}`, 263, 585);
 
-        // Agregar código QR dinámico
+        // Agregar código QR con logo al PDF
         const qrImage = new Image();
         qrImage.src = qrCodeDataURL;
+        await new Promise((resolve) => {
+            qrImage.onload = () => resolve();
+        });
         doc.addImage(qrImage, 'PNG', 124, 460, 100, 100);
 
         return doc;
